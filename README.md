@@ -1,19 +1,5 @@
-Your goal is to create a professional, searchable, and highly informative README that functions as a project summary and a portfolio piece. The key to ranking on GitHub and impressing recruiters is a combination of clear structure, relevant keywords, and visual proof of functionality.
-
-Here is the complete, professional README template for your **Sahayaak** project.
-
------
-
 # 🧘 Sahaayak: Mental Wellness Companion for Students 
-
-### 🌐 Cross-Platform Mobile Application | Mental Health Tech | Supabase & Gemini AI
-
-[](https://www.google.com/search?q=https://github.com/YOUR_USERNAME/YOUR_REPO_NAME)
-[](https://www.google.com/search?q=https://github.com/YOUR_USERNAME/YOUR_REPO_NAME)
-[](https://opensource.org/licenses/MIT)
-[](https://flutter.dev/docs/development/tools/sdk/releases)
-
------
+#🌐 Cross-Platform Mobile Application | Mental Health Tech | Supabase & Gemini AI
 
 ## 🎯 Project Overview & Mission
 
@@ -123,10 +109,3 @@ This project served as a comprehensive exploration of key development challenges
 ## 🤝 Contribution & License
 
 Contributions are welcome\! Please feel free to open issues or submit pull requests.
-
-This project is licensed under the MIT License.
-
------
-
-| **[LinkedIn Profile Link]** | **[Portfolio/Website Link]** |
-| :--- | :--- |
