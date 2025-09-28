@@ -1,5 +1,5 @@
 # 🧘 Sahaayak: Mental Wellness Companion for Students 
-#🌐 Cross-Platform Mobile Application | Mental Health Tech | Supabase & Gemini AI
+🌐 Cross-Platform Mobile Application | Mental Health Tech | Supabase & Gemini AI
 
 ## 🎯 Project Overview & Mission
 
