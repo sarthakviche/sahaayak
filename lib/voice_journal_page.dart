@@ -11,7 +11,7 @@ import 'previous_journals_page.dart';
 // 🚨 IMPORTANT: DO NOT HARDCODE YOUR API KEY.
 // Use a package like flutter_dotenv to load it from a .env file.
 // For example: const String geminiApiKey = dotenv.env['GEMINI_API_KEY']!;
-const String geminiApiKey = "AIzaSyCGdSgNfG7QKPBcxndkpjRjSd9SBAme_o8";
+const String geminiApiKey = "use your api key here";
 
 class VoiceJournalPage extends StatefulWidget {
   const VoiceJournalPage({super.key});
