@@ -4,7 +4,7 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 // ⬇️ IMPORTANT: Replace this placeholder with your actual Gemini API key
 // const String geminiApiKey = String.fromEnvironment('GEMINI_API_KEY');
 const String geminiApiKey =
-    "AIzaSyCGdSgNfG7QKPBcxndkpjRjSd9SBAme_o8"; // Make sure to use your actual key
+    "use your api key here"; // Make sure to use your actual key
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
