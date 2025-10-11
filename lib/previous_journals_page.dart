@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -14,10 +15,9 @@ class _PreviousJournalsPageState extends State<PreviousJournalsPage> {
 
   Future<List<Map<String, dynamic>>> _fetchJournals() async {
     final supabase = Supabase.instance.client;
-    if (supabase.auth.currentUser == null) {
-      return [];
-    }
-    final userId = supabase.auth.currentUser!.id;
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return [];
+
     final response = await supabase
         .from('journals')
         .select()
@@ -26,68 +26,131 @@ class _PreviousJournalsPageState extends State<PreviousJournalsPage> {
     return response;
   }
 
-  /// Convert any DateTime (parsed from Supabase) to IST.
-  /// We first get the UTC moment with .toUtc(), then add the IST offset.
   DateTime _toIst(DateTime dt) {
-    final utc = dt.toUtc();
-    return utc.add(_istOffset);
+    return dt.toUtc().add(_istOffset);
   }
 
-  /// Safely parse an ISO timestamp string to IST DateTime.
-  /// If parsing fails, returns `DateTime.now()` converted to IST as a fallback.
   DateTime _parseIsoToIst(String? iso) {
-    if (iso == null) {
-      return _toIst(DateTime.now());
-    }
+    if (iso == null) return _toIst(DateTime.now());
     try {
-      final parsed = DateTime.parse(iso);
-      return _toIst(parsed);
+      return _toIst(DateTime.parse(iso));
     } catch (_) {
-      // Fallback
       return _toIst(DateTime.now());
     }
   }
 
-  /// Build the 30-day heatmap using IST-based days.
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.purple.shade50,
+            Colors.deepPurple.shade50,
+            Colors.white,
+          ],
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: Text(
+            'Journal History',
+            style: GoogleFonts.quicksand(
+                color: Colors.black87, fontWeight: FontWeight.bold),
+          ),
+          centerTitle: true,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black87),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        body: FutureBuilder<List<Map<String, dynamic>>>(
+          future: _fetchJournals(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+              return Center(
+                child: Text(
+                  snapshot.hasError ? 'Error: ${snapshot.error}' : 'You have no journal entries yet.',
+                  style: GoogleFonts.lato(color: Colors.black54),
+                ),
+              );
+            }
+            final journals = snapshot.data!;
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeatmap(journals),
+                  const SizedBox(height: 32),
+                  Text(
+                    'Past Entries',
+                    style: GoogleFonts.quicksand(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: journals.length,
+                    itemBuilder: (context, index) {
+                      return _buildJournalCard(journals[index]);
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   Widget _buildHeatmap(List<Map<String, dynamic>> journals) {
-    // IST "now" and date-only boundaries
     final istNow = _toIst(DateTime.now());
     final istNowDate = DateTime(istNow.year, istNow.month, istNow.day);
-
-    // earliest included day = 29 days before today (so total 30 days including today)
     final earliestDate = istNowDate.subtract(const Duration(days: 29));
-
-    // collect normalized journal dates (IST)
     final journalDates = journals
-        .map((j) {
-          final created = _parseIsoToIst(j['created_at'] as String?);
-          return DateTime(created.year, created.month, created.day);
-        })
-        .where((d) {
-          // include if within [earliestDate, istNowDate]
-          return !d.isBefore(earliestDate) && !d.isAfter(istNowDate);
-        })
+        .map((j) => _parseIsoToIst(j['created_at']))
+        .map((d) => DateTime(d.year, d.month, d.day))
+        .where((d) => !d.isBefore(earliestDate) && !d.isAfter(istNowDate))
         .toSet();
-
-    final entryCount = journalDates.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Last 30 Days',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
+          style: GoogleFonts.quicksand(
+            fontSize: 22,
             fontWeight: FontWeight.bold,
+            color: Colors.black87,
           ),
         ),
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFF2C3E50),
-            borderRadius: BorderRadius.circular(12),
+            color: Colors.white.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.purple.withOpacity(0.05),
+                blurRadius: 20,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
           child: Column(
             children: [
@@ -101,15 +164,13 @@ class _PreviousJournalsPageState extends State<PreviousJournalsPage> {
                 ),
                 itemCount: 30,
                 itemBuilder: (context, index) {
-                  // Build the grid from today (index 0) backwards in IST
                   final day = istNowDate.subtract(Duration(days: index));
                   final hasEntry = journalDates.contains(day);
-
                   return Container(
                     decoration: BoxDecoration(
                       color: hasEntry
-                          ? const Color(0xFF82E0AA)
-                          : Colors.grey.shade800,
+                          ? Colors.deepPurple.shade200
+                          : Colors.black.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   );
@@ -117,8 +178,8 @@ class _PreviousJournalsPageState extends State<PreviousJournalsPage> {
               ),
               const SizedBox(height: 12),
               Text(
-                '$entryCount entries in the last 30 days',
-                style: TextStyle(color: Colors.grey[400]),
+                '${journalDates.length} entries in the last 30 days',
+                style: GoogleFonts.lato(color: Colors.grey[600]),
               ),
             ],
           ),
@@ -127,172 +188,128 @@ class _PreviousJournalsPageState extends State<PreviousJournalsPage> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF1A2C38),
-      appBar: AppBar(
-        title: const Text(
-          'Journal History',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _fetchJournals(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Error: ${snapshot.error}',
-                style: const TextStyle(color: Colors.white),
-              ),
-            );
-          }
-          final journals = snapshot.data;
-          if (journals == null || journals.isEmpty) {
-            return const Center(
-              child: Text(
-                'You have no journal entries yet.',
-                style: TextStyle(color: Colors.white),
-              ),
-            );
-          }
+  Widget _buildJournalCard(Map<String, dynamic> journal) {
+    final createdAtIst = _parseIsoToIst(journal['created_at']);
+    // ✅ --- FETCH AND PREPARE TAGS --- ✅
+    final List<dynamic> tags = journal['analysis_tags'] ?? [];
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeatmap(journals),
-                const SizedBox(height: 32),
-                const Text(
-                  'Past Entries',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: journals.length,
-                  itemBuilder: (context, index) {
-                    final journal = journals[index];
-                    final createdAtIst = _parseIsoToIst(
-                      journal['created_at'] as String?,
-                    );
-
-                    return GestureDetector(
-                      onTap: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            backgroundColor: const Color(0xFFE8EAF6),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            title: Text(
-                              journal['title'] ?? 'Journal Entry',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            content: SingleChildScrollView(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    journal['summary'] ??
-                                        'No summary available.',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    journal['transcript'] ??
-                                        'No transcript available.',
-                                    style: const TextStyle(
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(),
-                                child: const Text(
-                                  'Close',
-                                  style: TextStyle(color: Colors.black87),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xAAE0F2E8).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              backgroundColor: Colors.white.withOpacity(0.15),
-                              child: const Icon(
-                                Icons.mic,
-                                color: Color(0xFF82E0AA),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Indian date format: dd/MM/yyyy
-                                Text(
-                                  DateFormat('dd/MM/yyyy').format(createdAtIst),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                // 12-hour time: HH:mm a
-                                Text(
-                                  DateFormat('hh:mm a').format(createdAtIst),
-                                  style: TextStyle(
-                                    color: Colors.grey[400],
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 4,
+      shadowColor: Colors.purple.withOpacity(0.1),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: () {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15)),
+              title: Text(
+                journal['title'] ?? 'Journal Entry',
+                style: GoogleFonts.quicksand(fontWeight: FontWeight.bold),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      journal['summary'] ?? 'No summary.',
+                      style: GoogleFonts.lato(
+                          fontWeight: FontWeight.w600, height: 1.5),
+                    ),
+                    const SizedBox(height: 16),
+                    // ✅ --- DISPLAY TAGS IN DIALOG --- ✅
+                    if (tags.isNotEmpty) ...[
+                      Text('Key Themes:', style: GoogleFonts.quicksand(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 6.0,
+                        runSpacing: 4.0,
+                        children: tags.map((tag) => Chip(
+                          label: Text(tag.toString()),
+                          backgroundColor: Colors.purple.shade50,
+                          labelStyle: TextStyle(color: Colors.purple.shade800),
+                        )).toList(),
                       ),
-                    );
-                  },
+                      const SizedBox(height: 16),
+                    ],
+                    const Divider(),
+                    const SizedBox(height: 16),
+                    Text(
+                      journal['transcript'] ?? 'No transcript.',
+                      style: GoogleFonts.lato(color: Colors.black54, height: 1.5),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Close'),
                 ),
               ],
             ),
           );
         },
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: Colors.purple.shade50,
+                    child: Icon(Icons.mic_none, color: Colors.purple.shade400),
+                  ),
+                  const SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        DateFormat('MMMM dd, yyyy').format(createdAtIst), // e.g., October 11, 2025
+                        style: GoogleFonts.quicksand(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        DateFormat('hh:mm a').format(createdAtIst), // e.g., 12:08 PM
+                        style: GoogleFonts.lato(color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                journal['title'] ?? 'No Title',
+                style: GoogleFonts.lato(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    color: Colors.black87),
+              ),
+              // ✅ --- DISPLAY TAGS IN CARD --- ✅
+              if (tags.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 6.0,
+                  runSpacing: 4.0,
+                  children: tags.map((tag) => Chip(
+                    label: Text(tag.toString(), style: const TextStyle(fontSize: 12)),
+                    backgroundColor: Colors.purple.shade50,
+                    labelStyle: TextStyle(color: Colors.purple.shade800),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  )).toList(),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

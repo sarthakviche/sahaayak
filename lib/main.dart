@@ -1,12 +1,14 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_page.dart';
 import 'home_page.dart';
 import 'chat_page.dart';
 import 'resources_page.dart';
-import 'splash_screen.dart'; // Import the new splash screen
+import 'splash_screen.dart';
 import 'support_network_page.dart';
-import 'counselors_screen.dart';
+import 'profile_insights_page.dart';
 import 'calm.dart';
 
 Future<void> main() async {
@@ -31,53 +33,47 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Sahayaak',
       theme: ThemeData(
-        primarySwatch: Colors.green,
+        primarySwatch: Colors.deepPurple,
         visualDensity: VisualDensity.adaptivePlatformDensity,
-        scaffoldBackgroundColor: const Color(0xFFF0F5E6),
+        scaffoldBackgroundColor: Colors.white,
       ),
       debugShowCheckedModeBanner: false,
-      home: const SplashScreen(), // The app now starts with the splash screen
+      home: const SplashScreen(),
     );
   }
 }
 
-class AuthStateWrapper extends StatefulWidget {
+// ✅ THIS IS THE CORRECT, ROBUST IMPLEMENTATION
+class AuthStateWrapper extends StatelessWidget {
   const AuthStateWrapper({super.key});
 
   @override
-  State<AuthStateWrapper> createState() => _AuthStateWrapperState();
-}
-
-class _AuthStateWrapperState extends State<AuthStateWrapper> {
-  @override
-  void initState() {
-    super.initState();
-    supabase.auth.onAuthStateChange.listen((data) {
-      final AuthChangeEvent event = data.event;
-      if (mounted) {
-        if (event == AuthChangeEvent.signedIn) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const AppShell()),
-          );
-        } else if (event == AuthChangeEvent.signedOut) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const AuthPage()),
+  Widget build(BuildContext context) {
+    // A StreamBuilder constantly listens to the auth stream and rebuilds the UI
+    return StreamBuilder<AuthState>(
+      stream: supabase.auth.onAuthStateChange,
+      builder: (context, snapshot) {
+        // While waiting for the first auth event, show a loading screen
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
           );
         }
-      }
-    });
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    if (supabase.auth.currentSession != null) {
-      return const AppShell();
-    }
-    return const AuthPage();
+        final session = snapshot.data?.session;
+        if (session != null) {
+          // If a session exists (user is logged in), show the main app
+          return const AppShell();
+        } else {
+          // If there is no session (user is logged out), show the login page
+          return const AuthPage();
+        }
+      },
+    );
   }
 }
 
-// App Shell with Bottom Navigation Bar
+
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -87,12 +83,13 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _selectedIndex = 0;
-  final List<Widget> _widgetOptions = <Widget>[
-    const HomePage(),
-    const ChatPage(),
-    const ResourcesPage(), // This now links to the actual ResourcesPage
-    const CounselorsScreen(),
-    const SupportNetworkPage(),
+
+  static const List<Widget> _widgetOptions = <Widget>[
+    HomePage(),
+    ChatPage(),
+    ResourcesPage(),
+    SupportNetworkPage(),
+    ProfileInsightsPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -104,41 +101,60 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _widgetOptions.elementAt(_selectedIndex),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat_outlined),
-            activeIcon: Icon(Icons.chat),
-            label: 'Chat',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.library_books_outlined),
-            activeIcon: Icon(Icons.library_books),
-            label: 'Resources',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month_outlined),
-            activeIcon: Icon(Icons.calendar_month),
-            label: 'Book',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: const Color(0xFF5A8E3F),
-        unselectedItemColor: Colors.grey,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-        onTap: _onItemTapped,
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _widgetOptions,
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.9),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
+            )
+          ],
+        ),
+        child: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home_rounded),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.chat_bubble_outline_rounded),
+              activeIcon: Icon(Icons.chat_bubble_rounded),
+              label: 'Chat',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.library_books_outlined),
+              activeIcon: Icon(Icons.library_books_rounded),
+              label: 'Resources',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.people_alt_outlined),
+              activeIcon: Icon(Icons.people_alt_rounded),
+              label: 'Support',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline_rounded),
+              activeIcon: Icon(Icons.person_rounded),
+              label: 'Profile',
+            ),
+          ],
+          currentIndex: _selectedIndex,
+          selectedItemColor: Colors.deepPurple.shade400,
+          unselectedItemColor: Colors.grey.shade400,
+          selectedLabelStyle:
+              GoogleFonts.quicksand(fontWeight: FontWeight.bold),
+          unselectedLabelStyle: GoogleFonts.quicksand(),
+          onTap: _onItemTapped,
+        ),
       ),
     );
   }

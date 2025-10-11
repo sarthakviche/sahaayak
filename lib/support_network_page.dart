@@ -1,429 +1,544 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
-import 'mood_trends_page.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+const List<Map<String, dynamic>> counselors = [
+  {
+    'name': 'Dr. Priya Sharma',
+    'specialization': 'Student Counseling & Anxiety',
+    'rating': 4.8,
+    'years_of_experience': 8,
+    'languages': ['Hindi', 'English'],
+    'city': 'Delhi',
+  },
+  {
+    'name': 'Rahul Mehta',
+    'specialization': 'CBT & Depression',
+    'rating': 4.6,
+    'years_of_experience': 5,
+    'languages': ['English', 'Marathi'],
+    'city': 'Mumbai',
+  },
+  {
+    'name': 'Dr. Anjali Gupta',
+    'specialization': 'College Mental Health',
+    'rating': 4.9,
+    'years_of_experience': 12,
+    'languages': ['Hindi', 'English', 'Punjabi'],
+    'city': 'Delhi',
+  },
+];
+
+const List<Map<String, dynamic>> peerGroups = [
+  {
+    'name': 'Exam Stress Support Circle',
+    'description':
+        'Share exam strategies and support each other through academic pressure',
+    'category': 'Study Support',
+    'members': 24,
+    'is_live': true,
+    'time': 'Daily 8:00 PM',
+    'moderator': 'Sneha (3rd Year Psychology)',
+  },
+  {
+    'name': 'Homesickness & Adjustment',
+    'description': 'For students missing home and adjusting to college life',
+    'category': 'Emotional Support',
+    'members': 18,
+    'is_live': false,
+    'time': 'Mon/Wed/Fri 7:00 PM',
+    'moderator': 'Arjun (4th Year, Peer Mentor)',
+  },
+];
+
+const List<Map<String, dynamic>> crisisHelplines = [
+  {
+    'name': 'KIRAN National Helpline',
+    'description': '24/7 mental health support',
+    'number': '1800-599-0019',
+    'type': 'National',
+  },
+  {
+    'name': 'Vandrevala Foundation',
+    'description': '24/7 mental health helpline',
+    'number': '9999666555',
+    'type': 'National',
+    'languages': ['Hindi', 'English', 'Multiple'],
+  },
+];
+
 class SupportNetworkPage extends StatefulWidget {
-  const SupportNetworkPage({super.key});
+  final int initialTabIndex;
+
+  const SupportNetworkPage({
+    super.key,
+    this.initialTabIndex = 0,
+  });
 
   @override
   State<SupportNetworkPage> createState() => _SupportNetworkPageState();
 }
 
-class _SupportNetworkPageState extends State<SupportNetworkPage>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  int? _selectedMoodIndex;
-  bool _showNoteField = false; // 👈 for toggling note field
-  final TextEditingController _noteController = TextEditingController();
-
-  final List<Map<String, String>> _peerGroups = [
-    {
-      'name': 'Mindful Moments',
-      'topics': 'Anxiety, Stress',
-      'members': '12',
-      'next_meeting': 'Tomorrow, 6 PM',
-      'link': 'https://meet.google.com/abc-defg-hij',
-    },
-    {
-      'name': 'Support Circle',
-      'topics': 'Depression, Isolation',
-      'members': '8',
-      'next_meeting': 'Wednesday, 7 PM',
-      'link': 'https://meet.google.com/klm-nopq-rst',
-    },
-    {
-      'name': 'Study Buddies',
-      'topics': 'Academic Pressure, Time Management',
-      'members': '15',
-      'next_meeting': 'Thursday, 5 PM',
-      'link': 'https://meet.google.com/uvw-xyza-bcd',
-    },
-    {
-      'name': 'Connect & Thrive',
-      'topics': 'Relationships, Social Anxiety',
-      'members': '10',
-      'next_meeting': 'Friday, 8 PM',
-      'link': 'https://meet.google.com/efg-hijk-lmn',
-    },
-  ];
+class _SupportNetworkPageState extends State<SupportNetworkPage> {
+  late int _selectedIndex;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _selectedIndex = widget.initialTabIndex;
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    _noteController.dispose();
-    super.dispose();
+  String _generateRandomGmeetLink() {
+    const String chars = 'abcdefghijklmnopqrstuvwxyz';
+    final Random random = Random();
+    String part1 = String.fromCharCodes(Iterable.generate(
+        3, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
+    String part2 = String.fromCharCodes(Iterable.generate(
+        4, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
+    String part3 = String.fromCharCodes(Iterable.generate(
+        3, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
+    return 'https://meet.google.com/$part1-$part2-$part3';
+  }
+
+  void _showBookingConfirmation(BuildContext context, String title) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text('Session Confirmed!',
+              style: GoogleFonts.quicksand(fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Your session with $title has been booked.',
+                  style: GoogleFonts.lato()),
+              const SizedBox(height: 16),
+              const Text('Meeting Link:',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              SelectableText(_generateRandomGmeetLink(),
+                  style: const TextStyle(color: Colors.blue)),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0F5E6),
-      appBar: AppBar(
-        title: const Text(
-          'Profile',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+    Widget pageContent;
+    if (_selectedIndex == 0) {
+      pageContent = _buildCounselorsList();
+    } else if (_selectedIndex == 1) {
+      pageContent = _buildPeerGroupsList();
+    } else {
+      pageContent = _buildCrisisHelpContent();
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.purple.shade50,
+            Colors.deepPurple.shade50,
+            Colors.white,
+          ],
         ),
-        centerTitle: true,
+      ),
+      child: Scaffold(
         backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-      ),
-      body: Column(
-        children: [
-          // Mood logging card
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 6,
-                  offset: Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'How are you feeling today?',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(5, (index) {
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedMoodIndex = index;
-                        });
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.all(8),
-                        margin: const EdgeInsets.symmetric(horizontal: 6),
-                        decoration: BoxDecoration(
-                          color: _selectedMoodIndex == index
-                              ? Colors.green.withOpacity(0.25)
-                              : Colors.transparent,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          ['😩', '😥', '😐', '😊', '😁'][index],
-                          style: const TextStyle(fontSize: 30),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-                const SizedBox(height: 8),
-
-                // Add Note Toggle
-                if (!_showNoteField)
-                  TextButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        _showNoteField = true;
-                      });
-                    },
-                    icon: const Icon(Icons.note_add, color: Colors.green),
-                    label: const Text(
-                      'Add a note',
-                      style: TextStyle(color: Colors.green),
-                    ),
-                  )
-                else
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TextField(
-                        controller: _noteController,
-                        maxLines: 2,
-                        decoration: InputDecoration(
-                          hintText: 'Write your note...',
-                          filled: true,
-                          fillColor: Colors.grey[100],
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {
-                            // TODO: Save note to backend if needed
-                            setState(() {
-                              _showNoteField = false;
-                              _noteController.clear();
-                            });
-                          },
-                          child: const Text('Done'),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                const SizedBox(height: 12),
-
-                // Moved button down & renamed
-                Center(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const MoodTrendsPage(),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                    ),
-                    icon: const Icon(Icons.trending_up, color: Colors.white),
-                    label: const Text(
-                      'Your Mood in the Past Few Days',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          title: Text(
+            'Support Network',
+            style: GoogleFonts.quicksand(
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
             ),
           ),
-
-          // Tab bar
-          TabBar(
-            controller: _tabController,
-            indicatorColor: Colors.green,
-            labelColor: Colors.green,
-            unselectedLabelColor: Colors.grey,
-            tabs: const [
-              Tab(text: 'Peer Groups'),
-              Tab(text: 'Crisis Help'),
-            ],
-          ),
-
-          // Content for tabs
-          // Replace inside TabBarView
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildPeerGroupsTab(),
-                _buildCrisisHelpTab(), // New function for crisis help
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPeerGroupsTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              OutlinedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.filter_list, color: Colors.black54),
-                label: const Text(
-                  'Filter',
-                  style: TextStyle(color: Colors.black54),
-                ),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.grey),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.group_add, color: Colors.white),
-                label: const Text(
-                  'Create Group',
-                  style: TextStyle(color: Colors.white),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          ..._peerGroups.map((group) {
-            return _buildGroupCard(
-              group['name']!,
-              group['topics']!,
-              int.parse(group['members']!),
-              group['next_meeting']!,
-              group['link']!,
-            );
-          }).toList(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGroupCard(
-    String title,
-    String topics,
-    int members,
-    String nextMeeting,
-    String meetLink,
-  ) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      elevation: 3,
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 10,
         ),
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        body: Column(
           children: [
-            Text(topics, style: const TextStyle(color: Colors.grey)),
-            const SizedBox(height: 4),
-            Text(
-              '$members members • Next meeting: $nextMeeting',
-              style: const TextStyle(color: Colors.grey),
+            _buildCustomSegmentedControl(),
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (child, animation) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                child: pageContent,
+              ),
             ),
           ],
         ),
-        trailing: ElevatedButton(
-          onPressed: () async {
-            final uri = Uri.parse(meetLink);
-            if (await canLaunchUrl(uri)) {
-              await launchUrl(uri);
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Could not open the Google Meet link'),
-                ),
-              );
-            }
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+      ),
+    );
+  }
+
+  Widget _buildCustomSegmentedControl() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(50),
+      ),
+      child: Row(
+        children: [
+          _buildSegment('Counselors', 0),
+          _buildSegment('Peer Groups', 1),
+          _buildSegment('Crisis Help', 2),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSegment(String title, int index) {
+    bool isSelected = _selectedIndex == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _selectedIndex = index),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(50),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    )
+                  ]
+                : [],
           ),
-          child: const Text('Join', style: TextStyle(color: Colors.white)),
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.quicksand(
+              fontWeight: FontWeight.bold,
+              color: isSelected ? Colors.deepPurple.shade600 : Colors.black54,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCounselorsList() {
+    return ListView.builder(
+      key: const ValueKey('counselorsList'),
+      padding: const EdgeInsets.only(top: 8, bottom: 16),
+      itemCount: counselors.length,
+      itemBuilder: (context, index) {
+        final counselor = counselors[index];
+        return CounselorCard(
+          counselorData: counselor,
+          onBookSession: () =>
+              _showBookingConfirmation(context, counselor['name']),
+        );
+      },
+    );
+  }
+
+  Widget _buildPeerGroupsList() {
+    return ListView.builder(
+      key: const ValueKey('peerGroupsList'),
+      padding: const EdgeInsets.only(top: 8, bottom: 16),
+      itemCount: peerGroups.length,
+      itemBuilder: (context, index) {
+        final group = peerGroups[index];
+        return PeerGroupCard(
+          groupData: group,
+          onJoinLive: () => _showBookingConfirmation(context, group['name']),
+        );
+      },
+    );
+  }
+
+  Widget _buildCrisisHelpContent() {
+    return SingleChildScrollView(
+      key: const ValueKey('crisisHelpContent'),
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.red.shade100),
+            ),
+            child: Column(
+              children: [
+                Icon(Icons.favorite_border,
+                    color: Colors.red.shade700, size: 32),
+                const SizedBox(height: 12),
+                Text(
+                  'You Are Not Alone',
+                  style: GoogleFonts.lato(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.red.shade900,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'If you are in distress, please reach out. Help is available, and there are people who care.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.lato(color: Colors.black54, height: 1.5),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...crisisHelplines
+              .map((helpline) => CrisisHelplineCard(helplineData: helpline))
+              .toList(),
+        ],
+      ),
+    );
+  }
+}
+
+class CounselorCard extends StatelessWidget {
+  final Map<String, dynamic> counselorData;
+  final VoidCallback onBookSession;
+
+  const CounselorCard({
+    super.key,
+    required this.counselorData,
+    required this.onBookSession,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      elevation: 4,
+      shadowColor: Colors.purple.withOpacity(0.1),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.purple.shade50,
+                  child: Icon(Icons.person_outline,
+                      size: 30, color: Colors.purple.shade400),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        counselorData['name'],
+                        style: GoogleFonts.lato(
+                            fontWeight: FontWeight.bold, fontSize: 18),
+                      ),
+                      Text(
+                        counselorData['specialization'],
+                        style: GoogleFonts.lato(
+                            color: Colors.black54, fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
+                Chip(
+                  avatar: Icon(Icons.star,
+                      color: Colors.amber.shade800, size: 16),
+                  label: Text(
+                    '${counselorData['rating']}',
+                    style: GoogleFonts.lato(fontWeight: FontWeight.bold),
+                  ),
+                  backgroundColor: Colors.amber.shade100,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${counselorData['years_of_experience']} years experience',
+                  style:
+                      GoogleFonts.lato(color: Colors.grey.shade700, fontSize: 14),
+                ),
+                ElevatedButton(
+                  onPressed: onBookSession,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple.shade400,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                  ),
+                  child: Text('Book',
+                      style: GoogleFonts.quicksand(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-Widget _buildCrisisHelpTab() {
-  final List<Map<String, String>> crisisHelplines = [
-    {
-      'title': 'Vandrevala Foundation Helpline',
-      'desc': 'Mental health support across India',
-      'number': '1860 2662 345',
-    },
-    {
-      'title': 'AASRA Helpline',
-      'desc': '24/7 Suicide prevention & mental health support',
-      'number': '+91-9820466726',
-    },
-    {
-      'title': 'Snehi',
-      'desc': 'Counseling & crisis intervention (Delhi)',
-      'number': '+91-9582208181',
-    },
-    {
-      'title': 'iCall (TISS)',
-      'desc': 'National mental health counseling service',
-      'number': '+91-9152987821',
-    },
-    {
-      'title': 'Childline 1098',
-      'desc': '24/7 helpline for children in distress',
-      'number': '1098',
-    },
-  ];
+class PeerGroupCard extends StatelessWidget {
+  final Map<String, dynamic> groupData;
+  final VoidCallback onJoinLive;
 
-  return ListView.builder(
-    padding: const EdgeInsets.all(16),
-    itemCount: crisisHelplines.length,
-    itemBuilder: (context, index) {
-      final helpline = crisisHelplines[index];
-      return Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        elevation: 2,
-        child: ListTile(
-          contentPadding: const EdgeInsets.all(16),
-          title: Text(
-            helpline['title']!,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              helpline['desc']!,
-              style: const TextStyle(color: Colors.grey),
+  const PeerGroupCard({
+    super.key,
+    required this.groupData,
+    required this.onJoinLive,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      elevation: 4,
+      shadowColor: Colors.purple.withOpacity(0.1),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.purple.shade50,
+                  child: Icon(Icons.groups_outlined,
+                      size: 30, color: Colors.purple.shade400),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    groupData['name'],
+                    style: GoogleFonts.lato(
+                        fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                ),
+                if (groupData['is_live'])
+                  Chip(
+                    label: Text('Live',
+                        style: GoogleFonts.lato(color: Colors.green.shade800)),
+                    backgroundColor: Colors.green.shade100,
+                    avatar:
+                        const Icon(Icons.circle, color: Colors.green, size: 12),
+                  ),
+              ],
             ),
-          ),
-          trailing: ElevatedButton.icon(
-            onPressed: () async {
-              final Uri phoneUri = Uri(scheme: 'tel', path: helpline['number']);
-              if (await canLaunchUrl(phoneUri)) {
-                await launchUrl(phoneUri);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Could not launch dialer')),
-                );
-              }
-            },
-            icon: const Icon(Icons.phone, color: Colors.white, size: 18),
-            label: const Text('Call', style: TextStyle(color: Colors.white)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+            const SizedBox(height: 12),
+            Text(
+              groupData['description'],
+              style: GoogleFonts.lato(color: Colors.black54, height: 1.5),
             ),
-          ),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${groupData['members']} members',
+                      style: GoogleFonts.lato(fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      groupData['time'],
+                      style: GoogleFonts.lato(color: Colors.grey, fontSize: 12),
+                    ),
+                  ],
+                ),
+                ElevatedButton(
+                  onPressed: onJoinLive,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple.shade400,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                  ),
+                  child: Text('Join',
+                      style: GoogleFonts.quicksand(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ],
         ),
-      );
-    },
-  );
+      ),
+    );
+  }
+}
+
+class CrisisHelplineCard extends StatelessWidget {
+  final Map<String, dynamic> helplineData;
+
+  const CrisisHelplineCard({super.key, required this.helplineData});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      elevation: 4,
+      shadowColor: Colors.red.withOpacity(0.1),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Colors.red.shade50,
+          child: Icon(Icons.phone_in_talk_outlined,
+              color: Colors.red.shade400),
+        ),
+        title: Text(
+          helplineData['name'],
+          style: GoogleFonts.lato(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(
+          helplineData['number'],
+          style: GoogleFonts.lato(color: Colors.black54),
+        ),
+        trailing: IconButton(
+          icon: Icon(Icons.call_outlined, color: Colors.red.shade400),
+          onPressed: () {
+            launchUrl(Uri(
+                scheme: 'tel',
+                path: helplineData['number'].replaceAll('-', '')));
+          },
+        ),
+      ),
+    );
+  }
 }
