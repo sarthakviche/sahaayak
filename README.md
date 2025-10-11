@@ -91,16 +91,30 @@ flutter run
 
 ## 📸 Screenshots & Visuals
 
+
+<img width="610" height="1356" alt="image" src="" />
+
+<img width="610" height="1356" alt="image" src="" />
+
+<img width="610" height="1356" alt="image" src="https://github.com/user-attachments/assets/928090d5-0c13-4955-8a92-2cf70bd950df" />
+
+<img width="610" height="1356" alt="image" src="https://github.com/user-attachments/assets/bd19f7e7-9057-42b2-b31f-214116b9b204" />
+
+<img width="610" height="1356" alt="image" src="" />
+
+
 <p float="left">
-  <img src="https://github.com/user-attachments/assets/d88bc540-0901-4ad9-aa4b-d617ce83b04c" width="220" />
+  <img src="https://github.com/user-attachments/assets/53b8e11a-9c8f-42fd-a11b-5609a7fd52a6" width="220" />
+ 
   <img src="https://github.com/user-attachments/assets/f529a133-8625-473b-9e29-68daa6ac15ba" width="220" />
-  <img src="https://github.com/user-attachments/assets/cdd1debe-b392-423c-8087-b2609c49b90c" width="220" />
+  
+  <img src="https://github.com/user-attachments/assets/db75d6b7-f126-4a88-addb-2087be762f5a" width="220" />
 </p>
 
 <p float="left">
-  <img src="https://github.com/user-attachments/assets/0aef4f88-869b-4053-b387-977e9ad18033" width="220" />
-  <img src="https://github.com/user-attachments/assets/f6a14cbf-5ef8-4281-8014-29964cbc329b" width="220" />
-  <img src="https://github.com/user-attachments/assets/3d2ca2be-a719-4ee3-81a6-86a0ee67d994" width="220" />
+  <img src="https://github.com/user-attachments/assets/97878ab8-5ec2-4229-8224-105dfefd9832" width="220" />
+  <img src="https://github.com/user-attachments/assets/e5c5c78c-6345-44f1-81dc-47b853a364ff" width="220" />
+  <img src="https://github.com/user-attachments/assets/57b6396f-5f36-4cf4-bc28-a23ad8b4af22" width="220" />
 </p>
 
 -----
